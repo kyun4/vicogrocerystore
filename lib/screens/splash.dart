@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:vico_grocery_store/screens/register.dart';
+import 'package:vico_grocery_store/screens/login.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -17,7 +18,6 @@ class _splashState extends State<Splash> {
 
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: SafeArea(
         child: PageView(
           controller: _pageController,
@@ -40,6 +40,24 @@ class SplashOne extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return Login();
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                child: Text("Skip", textAlign: TextAlign.right),
+                padding: const EdgeInsets.only(right: 25, top: 15),
+              ),
+            ),
+            SizedBox(height: 10),
             Container(
               child: Lottie.asset(
                 'assets/json_animations/store-1.json',
@@ -117,6 +135,24 @@ class SplashTwo extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return Login();
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                child: Text("Skip", textAlign: TextAlign.right),
+                padding: const EdgeInsets.only(right: 25, top: 15),
+              ),
+            ),
+            SizedBox(height: 10),
             Container(
               child: Lottie.asset(
                 'assets/json_animations/store-4.json',
@@ -194,6 +230,25 @@ class SplashThree extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return Login();
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width,
+                child: Text("Skip", textAlign: TextAlign.right),
+                padding: const EdgeInsets.only(right: 25, top: 15),
+              ),
+            ),
+            SizedBox(height: 10),
+
             Container(
               child: Lottie.asset(
                 'assets/json_animations/store-5.json',

@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:vico_grocery_store/screens/splash.dart';
+import 'package:vico_grocery_store/services/AuthGate.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:vico_grocery_store/firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'package:vico_grocery_store/services/firebaseServices.dart';
+//import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  //await dotenv.load();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<FirebaseServices>(
+          create: (_) => FirebaseServices(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -32,7 +52,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const Splash(),
+      home: const AuthGate(),
     );
   }
 }

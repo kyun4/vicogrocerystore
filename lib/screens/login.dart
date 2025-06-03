@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:vico_grocery_store/components/textfield.dart';
 import 'package:vico_grocery_store/screens/mainmenu.dart';
+import 'package:vico_grocery_store/screens/register.dart';
 import 'package:lottie/lottie.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -12,8 +14,9 @@ class Login extends StatefulWidget {
 
 class _loginState extends State<Login> {
   TextEditingController textEmailController = new TextEditingController();
-
   TextEditingController textPasswordController = new TextEditingController();
+  String? email_note;
+  String? password_note;
 
   void futureDelayed() {
     Future.delayed(const Duration(seconds: 3), () {
@@ -61,6 +64,33 @@ class _loginState extends State<Login> {
     futureDelayed();
   } //nextPage
 
+  Future<String> login(String email, String password) async {
+    String errorString = "";
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      nextPage();
+    } catch (error) {
+      errorString = error.toString();
+      //throw error;
+    }
+
+    return errorString;
+  } //login
+
+  void registerPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return Register();
+        },
+      ),
+    );
+  } // registerPage
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -96,7 +126,7 @@ class _loginState extends State<Login> {
 
                   TextFieldCustom(
                     isObscureText: false,
-                    hintText: "Enter Registered Email Address",
+                    hintText: "Email Address",
                     iconPrefix: Icon(
                       Icons.email_outlined,
                       color: Colors.lightBlueAccent,
@@ -104,10 +134,31 @@ class _loginState extends State<Login> {
                     iconSuffix: Icon(Icons.email, color: Colors.transparent),
                     textController: textEmailController,
                   ),
+                  Visibility(
+                    visible:
+                        email_note == null || email_note == "" ? false : true,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          padding: const EdgeInsets.only(left: 68, right: 25),
+                          child: Text(
+                            email_note ?? "",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: Colors.black38,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
 
                   TextFieldCustom(
                     isObscureText: true,
-                    hintText: "Enter Password",
+                    hintText: "Password",
                     iconPrefix: Icon(
                       Icons.lock_outline,
                       color: Colors.lightBlueAccent,
@@ -118,17 +169,73 @@ class _loginState extends State<Login> {
                     ),
                     textController: textPasswordController,
                   ),
-                  SizedBox(height: 20),
+                  Visibility(
+                    visible:
+                        password_note == null || password_note == ""
+                            ? false
+                            : true,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          padding: const EdgeInsets.only(left: 68, right: 25),
+                          child: Text(
+                            password_note ?? "",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              color: Colors.black38,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 15),
                   GestureDetector(
-                    onTap: () {
-                      nextPage();
+                    onTap: () async {
+                      String email = textEmailController.text;
+                      String password = textPasswordController.text;
+
+                      if (email.isEmpty) {
+                        setState(() {
+                          email_note = "Email is empty";
+                        });
+                      } else {
+                        setState(() {
+                          email_note = "";
+                        });
+                      }
+
+                      if (password.isEmpty) {
+                        setState(() {
+                          password_note = "Password is empty";
+                        });
+                      } else {
+                        setState(() {
+                          password_note = "";
+                        });
+                      }
+
+                      String errorString = await login(email, password);
+
+                      if (errorString.isNotEmpty) {
+                        if (errorString.toLowerCase().trim() ==
+                            "[firebase_auth/invalid-credential] the supplied auth credential is incorrect, malformed or has expired.") {
+                          setState(() {
+                            password_note = "Email or Password is Invalid";
+                          });
+                        }
+                      }
                     },
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.85,
-                      padding: const EdgeInsets.only(top: 20, bottom: 20),
+                      padding: const EdgeInsets.only(top: 16, bottom: 16),
                       decoration: BoxDecoration(
                         color: Colors.lightBlueAccent,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(35),
                       ),
                       child: Text(
                         "Login",
@@ -146,11 +253,16 @@ class _loginState extends State<Login> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Already registered?"),
+                        Text("Not yet registered?"),
                         SizedBox(width: 5),
-                        Text(
-                          "Login Now",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        GestureDetector(
+                          onTap: () {
+                            registerPage();
+                          },
+                          child: Text(
+                            "Register Now!",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
