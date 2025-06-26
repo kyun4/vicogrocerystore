@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+
 import 'package:vico_grocery_store/screens/login.dart';
 import 'package:vico_grocery_store/screens/qrcode.dart';
 import 'package:vico_grocery_store/screens/barcode.dart';
+import 'package:vico_grocery_store/screens/checkout.dart';
+import 'package:vico_grocery_store/screens/products.dart';
+import 'package:vico_grocery_store/screens/profile.dart';
+import 'package:vico_grocery_store/screens/cashinpage.dart';
+
 import 'package:barcode_widget/barcode_widget.dart';
-import 'package:vico_grocery_store/services/firebaseServices.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:vico_grocery_store/classes/UsersClass.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:vico_grocery_store/services/firebaseServices.dart';
+
+import 'package:vico_grocery_store/classes/UsersClass.dart';
 
 class MainMenu extends StatefulWidget {
   const MainMenu({super.key});
@@ -21,6 +29,8 @@ class _mainMenuState extends State<MainMenu> {
   String? email;
   String? phone;
   String? firebaseUID;
+  int currentPageIndex = 0;
+  int notifCounter = 0;
 
   void initState() {
     super.initState();
@@ -149,18 +159,30 @@ class _mainMenuState extends State<MainMenu> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: Container(
-          margin: const EdgeInsets.only(
-            top: 7.5,
-            left: 15,
-            right: 7.5,
-            bottom: 7.5,
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  return Profile();
+                },
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(
+              top: 7.5,
+              left: 15,
+              right: 7.5,
+              bottom: 7.5,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.person_2_outlined),
           ),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.person_2_outlined),
         ),
         title: Text(
           "VICO Grocery Store",
@@ -171,7 +193,30 @@ class _mainMenuState extends State<MainMenu> {
             onTap: () {},
             child: Container(
               margin: const EdgeInsets.only(right: 15, top: 0),
-              child: Icon(Icons.notifications),
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  Container(child: Icon(Icons.notifications)),
+                  Visibility(
+                    visible: notifCounter > 0 ? true : false,
+                    child: Positioned(
+                      bottom: 7,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2.5),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          notifCounter.toString(),
+                          style: TextStyle(fontSize: 8.5, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           GestureDetector(
@@ -189,8 +234,16 @@ class _mainMenuState extends State<MainMenu> {
         children: [
           PageView(
             controller: pageController,
-
-            children: [ListViewMain(username: username ?? ""), ListViewCart()],
+            onPageChanged: (int index) {
+              setState(() {
+                currentPageIndex = index;
+              });
+            },
+            children: [
+              ListViewMain(username: username ?? ""),
+              ListViewCart(pageControllerGet: pageController),
+              Checkout(),
+            ],
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -222,7 +275,30 @@ class _mainMenuState extends State<MainMenu> {
                         curve: Curves.easeOutBack,
                       );
                     },
-                    child: Icon(Icons.home_filled),
+                    child:
+                        currentPageIndex != null
+                            ? currentPageIndex == 0
+                                ? ShaderMask(
+                                  shaderCallback:
+                                      (bounds) => LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [Colors.blue, Colors.black87],
+                                      ).createShader(
+                                        Rect.fromLTWH(
+                                          0,
+                                          0,
+                                          bounds.width,
+                                          bounds.height,
+                                        ),
+                                      ),
+                                  child: Icon(
+                                    Icons.home_filled,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Icon(Icons.home_outlined)
+                            : Icon(Icons.home_outlined),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -245,7 +321,30 @@ class _mainMenuState extends State<MainMenu> {
                         curve: Curves.easeInOut,
                       );
                     },
-                    child: Icon(Icons.shopping_cart_outlined),
+                    child:
+                        currentPageIndex != null
+                            ? currentPageIndex == 1
+                                ? ShaderMask(
+                                  shaderCallback:
+                                      (bounds) => LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [Colors.blue, Colors.black87],
+                                      ).createShader(
+                                        Rect.fromLTWH(
+                                          0,
+                                          0,
+                                          bounds.width,
+                                          bounds.height,
+                                        ),
+                                      ),
+                                  child: Icon(
+                                    Icons.shopping_cart,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Icon(Icons.shopping_cart_outlined)
+                            : Icon(Icons.home_outlined),
                   ),
                 ],
               ),
@@ -258,13 +357,14 @@ class _mainMenuState extends State<MainMenu> {
 }
 
 class ListViewCart extends StatefulWidget {
-  const ListViewCart({super.key});
+  final PageController pageControllerGet;
+  const ListViewCart({super.key, required this.pageControllerGet});
   @override
   State<ListViewCart> createState() => _listViewCart();
 }
 
 class _listViewCart extends State<ListViewCart> {
-  void _showCartDialog(int index) {
+  void _showCartDialog(int index, PageController _pageController) {
     showDialog(
       context: context,
       builder: (builder) {
@@ -278,7 +378,7 @@ class _listViewCart extends State<ListViewCart> {
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.white,
                 ),
-                height: 350,
+                height: 475,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -295,7 +395,7 @@ class _listViewCart extends State<ListViewCart> {
                                   topRight: Radius.circular(10),
                                 ),
                                 child: Image.network(
-                                  height: 177,
+                                  height: 175,
                                   width: MediaQuery.of(context).size.width,
                                   "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
                                   fit: BoxFit.cover,
@@ -324,14 +424,27 @@ class _listViewCart extends State<ListViewCart> {
                           ),
 
                           SizedBox(height: 15),
+
                           Container(
-                            margin: const EdgeInsets.only(left: 5),
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            child: BarcodeWidget(
+                              barcode: Barcode.code128(),
+                              data: "product_cart_$index",
+                              width: MediaQuery.of(context).size.width,
+                              height: 75,
+                            ),
+                          ),
+
+                          SizedBox(height: 15),
+                          Container(
+                            margin: const EdgeInsets.only(left: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    SizedBox(height: 10),
                                     Text(
                                       "Product Cart $index",
                                       style: TextStyle(
@@ -351,6 +464,22 @@ class _listViewCart extends State<ListViewCart> {
 
                                         Text(
                                           "Vegetable",
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Sold by: ",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+
+                                        Text(
+                                          "1 Item",
                                           style: TextStyle(fontSize: 12),
                                         ),
                                       ],
@@ -408,16 +537,16 @@ class _listViewCart extends State<ListViewCart> {
                                 borderRadius: BorderRadius.circular(10),
                                 color: Colors.grey.withOpacity(0.5),
                               ),
-                              height: 35,
+                              height: 45,
                               margin: const EdgeInsets.only(right: 2.5),
                               padding: const EdgeInsets.only(
-                                top: 8,
+                                top: 12,
                                 bottom: 8,
                                 left: 12,
                                 right: 12,
                               ),
                               child: Text(
-                                "Remove",
+                                "Remove Item",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -427,26 +556,43 @@ class _listViewCart extends State<ListViewCart> {
                             ),
                           ),
 
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.blue,
-                            ),
-                            height: 35,
-
-                            margin: const EdgeInsets.only(right: 2.5),
-                            padding: const EdgeInsets.only(
-                              top: 8,
-                              bottom: 8,
-                              left: 20,
-                              right: 20,
-                            ),
-                            child: Text(
-                              "Add to Checkout",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                          GestureDetector(
+                            onTap: () {
+                              // Navigator.pop(context);
+                              // _pageController.animateToPage(
+                              //   2,
+                              //   duration: Duration(microseconds: 200),
+                              //   curve: Curves.easeOutBack,
+                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return Checkout();
+                                  },
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                color: Colors.blue,
+                              ),
+                              height: 45,
+                              margin: const EdgeInsets.only(right: 2.5),
+                              padding: const EdgeInsets.only(
+                                top: 12,
+                                bottom: 8,
+                                left: 20,
+                                right: 20,
+                              ),
+                              child: Text(
+                                "Add to Checkout",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -484,7 +630,7 @@ class _listViewCart extends State<ListViewCart> {
                 children: List.generate(32, (index) {
                   return GestureDetector(
                     onTap: () {
-                      _showCartDialog(index);
+                      _showCartDialog(index, widget.pageControllerGet);
                     },
                     child: Container(
                       height: 100,
@@ -739,11 +885,23 @@ class _listViewMainState extends State<ListViewMain> {
                                     size: 10,
                                   ),
                                   SizedBox(width: 2),
-                                  Text(
-                                    "Cash-in",
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.white,
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) {
+                                            return CashInPage();
+                                          },
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "Cash-in",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -874,6 +1032,180 @@ class _listViewMainState extends State<ListViewMain> {
                 ),
               ],
             ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(15),
+          height: 280,
+          margin: const EdgeInsets.only(bottom: 15),
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return Products();
+                      },
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 135,
+                  height: 225,
+                  margin: const EdgeInsets.only(right: 10, bottom: 15),
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 17.7,
+                        spreadRadius: 5,
+                        offset: Offset(4, 4),
+                        color: Colors.grey.withOpacity(0.1),
+                      ),
+                    ],
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 5),
+                        padding: const EdgeInsets.only(
+                          top: 45,
+                          bottom: 45,
+                          left: 35,
+                          right: 35,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.grey.withOpacity(0.2),
+                        ),
+                        child: Icon(
+                          Icons.shopping_cart_checkout_sharp,
+                          size: 55,
+                        ),
+                      ),
+
+                      SizedBox(height: 8),
+                      Text(
+                        "View Products",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "Delivery products\nto your home",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                width: 135,
+                height: 225,
+                margin: const EdgeInsets.only(right: 10, bottom: 15),
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 17.7,
+                      spreadRadius: 5,
+                      offset: Offset(4, 4),
+                      color: Colors.grey.withOpacity(0.1),
+                    ),
+                  ],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      padding: const EdgeInsets.only(
+                        top: 45,
+                        bottom: 45,
+                        left: 35,
+                        right: 35,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.grey.withOpacity(0.2),
+                      ),
+                      child: Icon(Icons.energy_savings_leaf, size: 55),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "Veggies Daily",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "Get home\nveggies everyday",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 135,
+                height: 225,
+                margin: const EdgeInsets.only(right: 10, bottom: 15),
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 17.7,
+                      spreadRadius: 5,
+                      offset: Offset(4, 4),
+                      color: Colors.grey.withOpacity(0.1),
+                    ),
+                  ],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      padding: const EdgeInsets.only(
+                        top: 45,
+                        bottom: 45,
+                        left: 35,
+                        right: 35,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.grey.withOpacity(0.2),
+                      ),
+                      child: Icon(Icons.trending_up_outlined, size: 55),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "Trending Products",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "Get the latest\nproducts here",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
         Container(
