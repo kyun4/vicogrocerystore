@@ -94,6 +94,7 @@ flutter:
       - assets/json_animations/loading-4.json
       - assets/json_animations/pusaaaa-1.json
       - assets/json_animations/scanner-1.json
+      - assets/json_animations/loading_clock_1.json
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

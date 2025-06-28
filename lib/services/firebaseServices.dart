@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vico_grocery_store/classes/UsersClass.dart';
 import 'package:vico_grocery_store/classes/ProductsClass.dart';
 import 'package:vico_grocery_store/classes/WalletClass.dart';
+import 'package:vico_grocery_store/classes/TransactionClass.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
@@ -59,10 +60,15 @@ class FirebaseServices with ChangeNotifier {
   ) async {
     final UID = new Uuid();
 
+    String datetimestamp = DateFormat("yyyyMMddhhmmss").format(DateTime.now());
     String user_transaction_id = UID.v4();
     String vat_amount = "";
     String vat_percentage = "";
     String processing_fee = "";
+    String receiptId =
+        "vicogrocerystore_" +
+        datetimestamp +
+        DateTime.now().millisecond.toString();
     String datetimenow = DateFormat(
       "yyyy-MM-dd hh:mm:ss",
     ).format(DateTime.now());
@@ -74,6 +80,7 @@ class FirebaseServices with ChangeNotifier {
       final response = await http.put(
         Uri.parse(url),
         body: json.encode({
+          "receipt_id": receiptId,
           "user_id": user_id,
           "user_id_role": user_role,
           "user_transaction_id": user_transaction_id,
@@ -100,13 +107,67 @@ class FirebaseServices with ChangeNotifier {
     }
   } // addTransaction
 
+  Future<List<TransactionClass>> getTransactionStream(
+    int limit,
+    String firebaseUID,
+  ) async {
+    List<TransactionClass> listTransaction = [];
+
+    String url =
+        "https://vicostore-fa07b-default-rtdb.firebaseio.com/user_transaction.json";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+
+      if (extractedData == null || response.body.isEmpty) {
+        return [];
+      }
+
+      extractedData.forEach((key, json) {
+        String userID = json['user_id'] ?? "";
+        if (firebaseUID == userID) {
+          listTransaction.add(
+            new TransactionClass(
+              user_transaction_id: json['user_transaction_id'] ?? "",
+              user_id: userID,
+              user_id_role: json['user_id_role'] ?? "",
+              receipt_id: json['receipt_id'] ?? "",
+              transaction_type: json['transaction_type'] ?? "",
+              status: json['status'] ?? "",
+              vat_amount: json['vat_amount'] ?? "",
+              vat_percentage: json['vat_percentage'] ?? "",
+              date_time: json['date_time'] ?? "",
+              date_time_approved: json['date_time_approved'] ?? "",
+              amount: json['amount'] ?? "",
+              approved_by: json['approved_by'] ?? "",
+              approved_by_role: json['approved_by_role'] ?? "",
+              grocery_fee: json['grocery_fee'] ?? "",
+              payment_method: json['payment_method'] ?? "",
+              payment_provider_name: json['payment_provider_name'] ?? "",
+              processing_fee: json['processing_fee'] ?? "",
+              purchase_type: json['purchase_type'] ?? "",
+              remarks: json['remarks'] ?? "",
+            ),
+          );
+        }
+      });
+    } catch (error) {
+      throw error;
+    }
+
+    listTransaction = listTransaction.take(limit).toList();
+
+    return listTransaction;
+  } // getTransactionStream
+
   Future<String> getWalletCurrentBalance(String firebaseUID) async {
     String currentBalance = "";
 
     List<WalletClass> walletRecord = [];
 
     String url =
-        "https://vicostore-fa07b-default-rtdb.firebaseio.com/user_wallet/$firebaseUID.json";
+        "https://vicostore-fa07b-default-rtdb.firebaseio.com/user_wallet.json";
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -114,8 +175,10 @@ class FirebaseServices with ChangeNotifier {
 
       if (extractedData == null || response.body.isEmpty) {
         return "";
-      } else {
-        extractedData.forEach((key, json) {
+      }
+
+      extractedData.forEach((key, json) {
+        if (firebaseUID == key) {
           walletRecord.add(
             WalletClass(
               user_id: key,
@@ -123,10 +186,10 @@ class FirebaseServices with ChangeNotifier {
               date_time_last_updated: json['date_time_last_updated'] ?? "",
             ),
           );
-        });
+        }
+      });
 
-        currentBalance = walletRecord.toList()[0].current_balance;
-      }
+      currentBalance = walletRecord.toList()[0].current_balance;
     } catch (error) {
       throw error;
     }

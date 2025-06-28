@@ -724,6 +724,31 @@ class ListViewMain extends StatefulWidget {
 }
 
 class _listViewMainState extends State<ListViewMain> {
+  String? currentBalance;
+  String? firebaseUID;
+  int recentTransactionLimitDisplay = 3;
+
+  void initState() {
+    super.initState();
+
+    setState(() {
+      firebaseUID = FirebaseAuth.instance.currentUser!.uid.toString();
+    });
+
+    updateDisplayCurrentBalance();
+  }
+
+  void updateDisplayCurrentBalance() async {
+    String currentBalanceTemp = await Provider.of<FirebaseServices>(
+      context,
+      listen: false,
+    ).getWalletCurrentBalance(firebaseUID ?? "");
+
+    setState(() {
+      currentBalance = "PHP " + currentBalanceTemp;
+    });
+  } // updateDisplayCurrentBalance
+
   Widget build(BuildContext context) {
     return ListView(
       children: [
@@ -845,7 +870,7 @@ class _listViewMainState extends State<ListViewMain> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "PHP 32,000.00",
+                          currentBalance ?? "PHP 0.0",
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
@@ -1237,61 +1262,97 @@ class _listViewMainState extends State<ListViewMain> {
                 height: 305,
                 padding: const EdgeInsets.only(top: 15, bottom: 10),
                 width: MediaQuery.of(context).size.width,
-                child: ListView(
-                  children: List.generate(32, (index) {
-                    return Container(
-                      height: 80,
-                      margin: const EdgeInsets.only(
-                        top: 10,
-                        bottom: 5,
-                        left: 10,
-                        right: 10,
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            spreadRadius: 7.7,
-                            blurRadius: 10.8,
-                            color: Colors.grey.withOpacity(0.2),
-                            offset: Offset(7, 7),
-                          ),
-                        ],
-                      ),
-                      width: MediaQuery.of(context).size.width,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Transaction $index"),
-                              Text(
-                                "Receipt ID: 010101001010101001",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                ),
+                child: StreamBuilder(
+                  stream:
+                      Provider.of<FirebaseServices>(context, listen: false)
+                          .getTransactionStream(
+                            recentTransactionLimitDisplay,
+                            firebaseUID ?? "",
+                          )
+                          .asStream(),
+                  builder: (context, snapshot) {
+                    int dataLength = snapshot.data!.length;
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text("No data available"));
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    return dataLength > 0
+                        ? ListView.builder(
+                          itemCount: dataLength,
+                          itemBuilder: (context, index) {
+                            final transactionData = snapshot.data;
+                            String receiptId =
+                                transactionData![index].receipt_id;
+                            String transactionId =
+                                transactionData![index].user_transaction_id;
+                            String amount = transactionData![index].amount;
+                            String dateTime = transactionData![index].date_time;
+
+                            return Container(
+                              height: 80,
+                              margin: const EdgeInsets.only(
+                                top: 10,
+                                bottom: 5,
+                                left: 10,
+                                right: 10,
                               ),
-                              Text(
-                                "June 1, 2025 8:32PM",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w400,
-                                ),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    spreadRadius: 7.7,
+                                    blurRadius: 10.8,
+                                    color: Colors.grey.withOpacity(0.2),
+                                    offset: Offset(7, 7),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          Text(
-                            "PHP 1,000.00",
-                            style: TextStyle(fontStyle: FontStyle.italic),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
+                              width: MediaQuery.of(context).size.width,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text("Send/Received/Purchased"),
+                                      Text(
+                                        "Receipt ID: $receiptId",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      Text(
+                                        dateTime,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    "PHP $amount",
+                                    style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        )
+                        : Center(child: Text("No data available"));
+                  },
                 ),
               ),
               SizedBox(height: 2.5),

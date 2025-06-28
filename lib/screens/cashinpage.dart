@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:vico_grocery_store/screens/mainmenu.dart';
+import 'package:vico_grocery_store/screens/CashInSummaryStatus.dart';
 import 'package:vico_grocery_store/components/textFieldCashIn.dart';
 import 'package:vico_grocery_store/services/firebaseServices.dart';
 
 import 'package:provider/provider.dart';
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 
 List<String> paymentMethods = ["Maya", "GCash", "BPI", "GoTyme"];
@@ -14,8 +16,65 @@ class CashInPage extends StatefulWidget {
   State<CashInPage> createState() => _cashInPageState();
 }
 
-class _cashInPageState extends State<CashInPage> {
-  TextEditingController amountController = new TextEditingController();
+class _cashInPageState extends State<CashInPage>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController amountController = new TextEditingController();
+  String? currentBalance;
+  String? firebaseUID;
+  String? amountStatus;
+
+  late AnimationController _controller;
+  late Animation<double> _offsetAnimation;
+
+  void initState() {
+    super.initState();
+    setState(() {
+      firebaseUID = FirebaseAuth.instance.currentUser!.uid;
+    });
+    updateDisplayCurrentBalance();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _offsetAnimation = Tween(begin: 0.0, end: 8.0)
+      .chain(CurveTween(curve: Curves.elasticIn))
+      .animate(_controller)..addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _controller.reverse();
+      }
+    });
+
+    amountController.addListener(() {
+      if (amountController.text != "") {
+        setState(() {
+          amountStatus = "";
+        });
+      }
+    });
+  }
+
+  void startShake() {
+    _controller.forward(from: 0);
+  } // startShake
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void updateDisplayCurrentBalance() async {
+    String currentBalanceTemp = await Provider.of<FirebaseServices>(
+      context,
+      listen: false,
+    ).getWalletCurrentBalance(firebaseUID ?? "");
+
+    setState(() {
+      currentBalance = currentBalanceTemp;
+    });
+  } // updateDisplayCurrentBalance
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +101,7 @@ class _cashInPageState extends State<CashInPage> {
           child: Column(
             children: [
               Container(
-                height: 200,
+                height: 210,
                 width: MediaQuery.of(context).size.width,
                 margin: const EdgeInsets.all(15),
                 padding: const EdgeInsets.all(20),
@@ -62,7 +121,7 @@ class _cashInPageState extends State<CashInPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.only(left: 15, top: 15),
+                      padding: const EdgeInsets.only(left: 15, top: 10),
                       child: Text(
                         "Amount",
                         style: TextStyle(
@@ -71,9 +130,27 @@ class _cashInPageState extends State<CashInPage> {
                         ),
                       ),
                     ),
-                    TextFieldCashIn(
-                      hintTextLabel: "0.0",
-                      textController: amountController,
+
+                    AnimatedBuilder(
+                      animation: _offsetAnimation,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(sin(_offsetAnimation.value) * 10, 0),
+                          child: child,
+                        );
+                      },
+                      child: TextFieldCashIn(
+                        hintTextLabel: "0.0",
+                        textController: amountController,
+                      ),
+                    ),
+
+                    Container(
+                      padding: const EdgeInsets.only(left: 15),
+                      child: Text(
+                        amountStatus ?? "",
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                     ),
                   ],
                 ),
@@ -87,27 +164,46 @@ class _cashInPageState extends State<CashInPage> {
                   itemBuilder:
                       (context, index) => GestureDetector(
                         onTap: () {
-                          String firebaseUID =
-                              FirebaseAuth.instance.currentUser!.uid;
-                          Provider.of<FirebaseServices>(
-                            context,
-                            listen: false,
-                          ).addTransaction(
-                            firebaseUID,
-                            "2",
-                            amountController.text,
-                            "",
-                            paymentMethods[index],
-                          );
+                          if (amountController.text == "") {
+                            startShake();
+                            setState(() {
+                              amountStatus = "Please specify amount";
+                            });
+                          } else {
+                            Provider.of<FirebaseServices>(
+                              context,
+                              listen: false,
+                            ).addTransaction(
+                              firebaseUID ?? "",
+                              "2",
+                              amountController.text,
+                              "",
+                              paymentMethods[index],
+                            );
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) {
-                                return MainMenu();
-                              },
-                            ),
-                          );
+                            Provider.of<FirebaseServices>(
+                              context,
+                              listen: false,
+                            ).updateWallet(
+                              firebaseUID ?? "",
+                              currentBalance ?? "0",
+                              amountController.text,
+                            );
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return CashInSummaryStatus(
+                                    merchant: paymentMethods[index],
+                                    amount: amountController.text,
+                                    account_name: "Mang Kanor",
+                                    account_number: "099090111111",
+                                  );
+                                },
+                              ),
+                            );
+                          }
                         },
                         child: Container(
                           height: 75,
