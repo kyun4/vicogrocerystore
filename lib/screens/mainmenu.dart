@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:vico_grocery_store/services/firebaseServices.dart';
+import 'package:vico_grocery_store/services/utilCustom.dart';
 
 import 'package:vico_grocery_store/classes/UsersClass.dart';
 
@@ -749,6 +750,13 @@ class _listViewMainState extends State<ListViewMain> {
     });
   } // updateDisplayCurrentBalance
 
+  String getTransactionLabel(String transTypeId) {
+    return Provider.of<UtilCustom>(
+      context,
+      listen: false,
+    ).transactionLegend(transTypeId);
+  } // getTransactionLabel
+
   Widget build(BuildContext context) {
     return ListView(
       children: [
@@ -1270,7 +1278,7 @@ class _listViewMainState extends State<ListViewMain> {
                             firebaseUID ?? "",
                           )
                           .asStream(),
-                  builder: (context, snapshot) {
+                  builder: (contextBuild, snapshot) {
                     int dataLength = snapshot.data!.length;
 
                     if (snapshot.hasError) {
@@ -1290,8 +1298,15 @@ class _listViewMainState extends State<ListViewMain> {
                                 transactionData![index].receipt_id;
                             String transactionId =
                                 transactionData![index].user_transaction_id;
+                            String paymentMerchant =
+                                transactionData![index].payment_provider_name;
+                            String transactionType =
+                                transactionData![index].transaction_type;
                             String amount = transactionData![index].amount;
                             String dateTime = transactionData![index].date_time;
+                            String transactionTypeLabel =
+                                getTransactionLabel(transactionType) +
+                                " ($paymentMerchant)";
 
                             return Container(
                               height: 80,
@@ -1323,7 +1338,13 @@ class _listViewMainState extends State<ListViewMain> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text("Send/Received/Purchased"),
+                                      Text(
+                                        transactionTypeLabel,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
                                       Text(
                                         "Receipt ID: $receiptId",
                                         style: TextStyle(
@@ -1340,12 +1361,18 @@ class _listViewMainState extends State<ListViewMain> {
                                       ),
                                     ],
                                   ),
-                                  Text(
-                                    "PHP $amount",
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
+                                  (amount != "")
+                                      ? Text(
+                                        "PHP " +
+                                            double.parse(
+                                              amount,
+                                            ).toStringAsFixed(2),
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          fontSize: 12,
+                                        ),
+                                      )
+                                      : Text("--"),
                                 ],
                               ),
                             );

@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:vico_grocery_store/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'package:vico_grocery_store/services/firebaseServices.dart';
+import 'package:vico_grocery_store/services/utilCustom.dart';
 //import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -19,6 +20,7 @@ void main() async {
         ChangeNotifierProvider<FirebaseServices>(
           create: (_) => FirebaseServices(),
         ),
+        ChangeNotifierProvider<UtilCustom>(create: (_) => UtilCustom()),
       ],
       child: const MyApp(),
     ),

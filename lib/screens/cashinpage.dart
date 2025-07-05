@@ -164,11 +164,24 @@ class _cashInPageState extends State<CashInPage>
                   itemBuilder:
                       (context, index) => GestureDetector(
                         onTap: () {
+                          var error = 0;
+
                           if (amountController.text == "") {
-                            startShake();
+                            error += 1;
                             setState(() {
                               amountStatus = "Please specify amount";
                             });
+                          } else {
+                            if (double.parse(amountController.text) < 1) {
+                              error += 1;
+                              setState(() {
+                                amountStatus = "Enter valid amount more than 0";
+                              });
+                            }
+                          }
+
+                          if (error > 0) {
+                            startShake();
                           } else {
                             Provider.of<FirebaseServices>(
                               context,

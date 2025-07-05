@@ -115,9 +115,18 @@ class _cashInSummaryStatusState extends State<CashInSummaryStatus> {
                       children: [
                         Text(
                           "Source Account Name: ",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
-                        Text(widget.account_name),
+                        Text(
+                          widget.account_name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w300,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     Row(
@@ -125,9 +134,18 @@ class _cashInSummaryStatusState extends State<CashInSummaryStatus> {
                       children: [
                         Text(
                           "Source Account Number: ",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
-                        Text(widget.account_number),
+                        Text(
+                          widget.account_number,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w300,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 10),
@@ -136,9 +154,18 @@ class _cashInSummaryStatusState extends State<CashInSummaryStatus> {
                       children: [
                         Text(
                           "Destination Merchant: ",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
-                        Text("VICO Grocery Store"),
+                        Text(
+                          "VICO Grocery Store",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w300,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     Row(
@@ -146,9 +173,18 @@ class _cashInSummaryStatusState extends State<CashInSummaryStatus> {
                       children: [
                         Text(
                           "Destination Account Name: ",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
-                        Text("Tiyo Kanor"),
+                        Text(
+                          "Tiyo Kanor",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w300,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     Row(
@@ -156,9 +192,18 @@ class _cashInSummaryStatusState extends State<CashInSummaryStatus> {
                       children: [
                         Text(
                           "Destination Account Number: ",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
-                        Text("09326969321"),
+                        Text(
+                          "09326969321",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w300,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 25),

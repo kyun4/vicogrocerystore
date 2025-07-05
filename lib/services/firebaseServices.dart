@@ -66,9 +66,7 @@ class FirebaseServices with ChangeNotifier {
     String vat_percentage = "";
     String processing_fee = "";
     String receiptId =
-        "vicogrocerystore_" +
-        datetimestamp +
-        DateTime.now().millisecond.toString();
+        "VGS" + datetimestamp + DateTime.now().millisecond.toString();
     String datetimenow = DateFormat(
       "yyyy-MM-dd hh:mm:ss",
     ).format(DateTime.now());
@@ -156,7 +154,14 @@ class FirebaseServices with ChangeNotifier {
       throw error;
     }
 
-    listTransaction = listTransaction.take(limit).toList();
+    if (limit > 0) {
+      listTransaction = listTransaction.take(limit).toList();
+    }
+
+    listTransaction.sort(
+      (a, b) =>
+          DateTime.parse(b.date_time).compareTo(DateTime.parse(a.date_time)),
+    );
 
     return listTransaction;
   } // getTransactionStream

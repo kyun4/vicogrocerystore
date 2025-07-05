@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class TextFieldCashIn extends StatefulWidget {
   final TextEditingController textController;
@@ -17,6 +18,9 @@ class _textFieldCashInState extends State<TextFieldCashIn> {
     return TextField(
       obscureText: false,
       controller: widget.textController,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
       style: TextStyle(fontSize: 56, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         hintText: widget.hintTextLabel,
