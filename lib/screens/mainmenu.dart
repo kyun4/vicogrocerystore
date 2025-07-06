@@ -8,6 +8,7 @@ import 'package:vico_grocery_store/screens/checkout.dart';
 import 'package:vico_grocery_store/screens/products.dart';
 import 'package:vico_grocery_store/screens/profile.dart';
 import 'package:vico_grocery_store/screens/cashinpage.dart';
+import 'package:vico_grocery_store/screens/transaction.dart';
 
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:provider/provider.dart';
@@ -57,10 +58,12 @@ class _mainMenuState extends State<MainMenu> {
         listUsersTemp.where((data) => data.user_id == firebaseUID).toList();
 
     String usernameTemp = userDataLength > 0 ? userDataFilter[0].username : "";
+    String phoneTemp = userDataLength > 0 ? userDataFilter[0].phone : "";
 
     setState(() {
       userData = listUsersTemp;
       username = usernameTemp;
+      phone = phoneTemp;
     });
   } // getUsersDataFromProvider
 
@@ -241,7 +244,7 @@ class _mainMenuState extends State<MainMenu> {
               });
             },
             children: [
-              ListViewMain(username: username ?? ""),
+              ListViewMain(username: username ?? "", phone: phone ?? ""),
               ListViewCart(pageControllerGet: pageController),
               Checkout(),
             ],
@@ -719,7 +722,8 @@ class _listViewCart extends State<ListViewCart> {
 
 class ListViewMain extends StatefulWidget {
   final String username;
-  const ListViewMain({super.key, required this.username});
+  final String phone;
+  const ListViewMain({super.key, required this.username, required this.phone});
   @override
   State<ListViewMain> createState() => _listViewMainState();
 }
@@ -842,14 +846,26 @@ class _listViewMainState extends State<ListViewMain> {
                             ),
                           ],
                         ),
-                        Row(
-                          children: [
-                            Text(
-                              "View Transactions",
-                              style: TextStyle(fontSize: 10),
-                            ),
-                            Icon(Icons.arrow_right_outlined),
-                          ],
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return Transaction();
+                                },
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                "View Transactions",
+                                style: TextStyle(fontSize: 10),
+                              ),
+                              Icon(Icons.arrow_right_outlined),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -924,7 +940,11 @@ class _listViewMainState extends State<ListViewMain> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) {
-                                            return CashInPage();
+                                            return CashInPage(
+                                              sourceAccountName:
+                                                  widget.username,
+                                              sourceAccountNumber: widget.phone,
+                                            );
                                           },
                                         ),
                                       );

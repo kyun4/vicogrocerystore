@@ -154,14 +154,14 @@ class FirebaseServices with ChangeNotifier {
       throw error;
     }
 
-    if (limit > 0) {
-      listTransaction = listTransaction.take(limit).toList();
-    }
-
     listTransaction.sort(
       (a, b) =>
           DateTime.parse(b.date_time).compareTo(DateTime.parse(a.date_time)),
     );
+
+    if (limit > 0) {
+      listTransaction = listTransaction.take(limit).toList();
+    }
 
     return listTransaction;
   } // getTransactionStream

@@ -11,7 +11,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 List<String> paymentMethods = ["Maya", "GCash", "BPI", "GoTyme"];
 
 class CashInPage extends StatefulWidget {
-  const CashInPage({super.key});
+  final String sourceAccountName;
+  final String sourceAccountNumber;
+  const CashInPage({
+    super.key,
+    required this.sourceAccountName,
+    required this.sourceAccountNumber,
+  });
 
   State<CashInPage> createState() => _cashInPageState();
 }
@@ -210,8 +216,8 @@ class _cashInPageState extends State<CashInPage>
                                   return CashInSummaryStatus(
                                     merchant: paymentMethods[index],
                                     amount: amountController.text,
-                                    account_name: "Mang Kanor",
-                                    account_number: "099090111111",
+                                    account_name: widget.sourceAccountName,
+                                    account_number: widget.sourceAccountNumber,
                                   );
                                 },
                               ),

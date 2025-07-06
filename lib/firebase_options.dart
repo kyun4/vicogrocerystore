@@ -52,5 +52,11 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions();
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: "AIzaSyCmgGdp1VZ0B8tL9dvqkal4xQ1XJs8sWw8",
+    appId: "1:68410408971:web:aaa632920ed6e1b7ba870e",
+    messagingSenderId: "68410408971",
+    projectId: "vicostore-fa07b",
+    storageBucket: "vicostore-fa07b.firebasestorage.app",
+  );
 }
