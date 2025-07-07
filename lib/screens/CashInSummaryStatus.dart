@@ -179,7 +179,7 @@ class _cashInSummaryStatusState extends State<CashInSummaryStatus> {
                           ),
                         ),
                         Text(
-                          "Tiyo Kanor",
+                          "Admin",
                           style: TextStyle(
                             fontWeight: FontWeight.w300,
                             fontSize: 12,

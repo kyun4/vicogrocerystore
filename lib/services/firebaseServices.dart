@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vico_grocery_store/classes/UsersClass.dart';
+import 'package:vico_grocery_store/classes/CartClass.dart';
 import 'package:vico_grocery_store/classes/ProductsClass.dart';
 import 'package:vico_grocery_store/classes/WalletClass.dart';
 import 'package:vico_grocery_store/classes/TransactionClass.dart';
@@ -104,6 +105,96 @@ class FirebaseServices with ChangeNotifier {
       throw error;
     }
   } // addTransaction
+
+  void addToCart(
+    String firebaseUID,
+    String product_id,
+    String price,
+    String qty,
+    String sold_by_item,
+    String category_id,
+  ) async {
+    double totalPrice = double.parse(price) * int.parse(qty);
+    String totalPriceString = totalPrice.toStringAsFixed(2);
+    final uuidvalue = new Uuid();
+    String userCartId = uuidvalue.v4();
+    final dateTimeNow = DateTime.now();
+
+    String discountValue = "";
+    String discountPercentage = "";
+
+    String promo_id = "";
+    String dateTimeAdded = DateFormat(
+      "yyyy-MM-dd HH:mm:ss",
+    ).format(dateTimeNow);
+
+    try {
+      String url =
+          "https://vicostore-fa07b-default-rtdb.firebaseio.com/user_cart/$userCartId.json";
+
+      final response = await http.put(
+        Uri.parse(url),
+        body: json.encode({
+          "cart_id": userCartId,
+          "product_id": product_id,
+          "category_id": category_id,
+          "price": price,
+          "qty": qty,
+          "total_price": totalPriceString,
+          "discount_amount": discountValue,
+          "discoun_percentage": discountPercentage,
+          "firebase_uid": firebaseUID,
+          "promo_id": promo_id,
+          "sold_by_item": sold_by_item,
+          "date_time_added": dateTimeAdded,
+          "cashier_processed_by": "",
+          "status": "0",
+        }),
+      );
+    } catch (error) {
+      throw error;
+    }
+  } // addToCart
+
+  Future<List<CartClass>> getCart(String firebaseUID) async {
+    List<CartClass> listCart = [];
+    String url =
+        "https://vicostore-fa07b-default-rtdb.firebaseio.com/user_cart.json";
+    try {
+      final response = await http.get(Uri.parse(url));
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+
+      if (extractedData == null || response.body.isEmpty) {
+        return [];
+      }
+
+      extractedData.forEach((key, json) {
+        listCart.add(
+          new CartClass(
+            cart_id: json['cart_id'] ?? "",
+            firebase_uid: json['firebase_uid'] ?? "",
+            product_id: json['product_id'] ?? "",
+            category_id: json['category_id'] ?? "",
+            price: json['price'] ?? "",
+            qty: json['qty'] ?? "",
+            discount_percentage: json['discount_percentage'] ?? "",
+            discount_amount: json['discount_amount'] ?? "",
+            promo_id: json['promo_id'] ?? "",
+            sold_by_item: json['sold_by_item'] ?? "",
+            date_time_added: json['date_time_added'] ?? "",
+            processed_by_cashier: json['processed_by_cashier'] ?? "",
+            date_time_cashier_processed:
+                json['date_time_cashier_processed'] ?? "",
+            status: json['status'] ?? "",
+          ),
+        );
+      });
+
+      return listCart;
+    } catch (error) {
+      throw error;
+    }
+  } // getCart
 
   Future<List<TransactionClass>> getTransactionStream(
     int limit,
@@ -262,7 +353,6 @@ class FirebaseServices with ChangeNotifier {
         );
 
         listUserData = listData;
-
         notifyListeners();
       });
     } catch (error) {
@@ -309,5 +399,5 @@ class FirebaseServices with ChangeNotifier {
     }
 
     return listProducts;
-  }
+  } // getProductsData
 }

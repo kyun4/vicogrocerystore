@@ -368,7 +368,28 @@ class ListViewCart extends StatefulWidget {
 }
 
 class _listViewCart extends State<ListViewCart> {
-  void _showCartDialog(int index, PageController _pageController) {
+  String? firebaseUID;
+
+  void initState() {
+    super.initState();
+    setState(() {
+      firebaseUID = FirebaseAuth.instance.currentUser!.uid.toString();
+    });
+  }
+
+  void _showCartDialog(
+    int index,
+    String productName,
+    String productId,
+    String categoryName,
+    String categoryId,
+    String soldByItem,
+    String qty,
+    String productPrice,
+    String totalPrice,
+    String imageUrl,
+    PageController _pageController,
+  ) {
     showDialog(
       context: context,
       builder: (builder) {
@@ -401,7 +422,7 @@ class _listViewCart extends State<ListViewCart> {
                                 child: Image.network(
                                   height: 175,
                                   width: MediaQuery.of(context).size.width,
-                                  "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
+                                  imageUrl,
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -433,7 +454,7 @@ class _listViewCart extends State<ListViewCart> {
                             padding: const EdgeInsets.only(left: 10, right: 10),
                             child: BarcodeWidget(
                               barcode: Barcode.code128(),
-                              data: "product_cart_$index",
+                              data: productId,
                               width: MediaQuery.of(context).size.width,
                               height: 75,
                             ),
@@ -450,7 +471,7 @@ class _listViewCart extends State<ListViewCart> {
                                   children: [
                                     SizedBox(height: 10),
                                     Text(
-                                      "Product Cart $index",
+                                      productName,
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w800,
@@ -467,7 +488,7 @@ class _listViewCart extends State<ListViewCart> {
                                         ),
 
                                         Text(
-                                          "Vegetable",
+                                          categoryName,
                                           style: TextStyle(fontSize: 12),
                                         ),
                                       ],
@@ -483,7 +504,7 @@ class _listViewCart extends State<ListViewCart> {
                                         ),
 
                                         Text(
-                                          "1 Item",
+                                          "${soldByItem} Item",
                                           style: TextStyle(fontSize: 12),
                                         ),
                                       ],
@@ -624,96 +645,143 @@ class _listViewCart extends State<ListViewCart> {
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          children: [
-            Container(
-              height: MediaQuery.of(context).size.height - 50,
-              width: MediaQuery.of(context).size.width,
-              padding: const EdgeInsets.only(bottom: 100),
-              child: ListView(
-                children: List.generate(32, (index) {
-                  return GestureDetector(
-                    onTap: () {
-                      _showCartDialog(index, widget.pageControllerGet);
-                    },
-                    child: Container(
-                      height: 100,
-                      padding: const EdgeInsets.all(10),
-                      margin: const EdgeInsets.only(
-                        left: 10,
-                        right: 10,
+        child: StreamBuilder(
+          stream:
+              Provider.of<FirebaseServices>(
+                context,
+                listen: false,
+              ).getCart(firebaseUID ?? "").asStream(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text("Data failed to load ..."));
+            }
 
-                        bottom: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: [
-                          BoxShadow(
-                            spreadRadius: 10.10,
-                            blurRadius: 15,
-                            color: Colors.grey.withOpacity(0.05),
-                            offset: Offset(7, 7),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: Colors.black38.withOpacity(0.2),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Image.network(
-                                      height: 50,
-                                      width: 50,
-                                      "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Product Cart Name $index",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text("Category: Vegetable"),
-                                    ],
-                                  ),
-                                ],
-                              ),
+            if (!snapshot.hasData) {
+              return Center(child: Text("Cart is Empty"));
+            }
 
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [Text("PHP 32.00"), Text("")],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            return ListView.builder(
+              itemCount: 1,
+              itemBuilder: (context, index) {
+                final data = snapshot.data;
+                String productPrice = data![index].price;
+                String productId = data![index].product_id;
+                String categoryId = data![index].category_id;
+
+                String productName = "";
+                String categoryName = "";
+                String imageUrl = "";
+
+                String qty = data![index].qty;
+                String soldByItem = data![index].sold_by_item;
+
+                return GestureDetector(
+                  onTap: () {
+                    _showCartDialog(
+                      index,
+                      productName,
+                      productId,
+                      categoryName,
+                      categoryId,
+                      soldByItem,
+                      qty,
+                      productPrice,
+                      "",
+                      imageUrl,
+                      widget.pageControllerGet,
+                    );
+                  },
+                  child: Container(
+                    height: 100,
+                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.only(
+                      left: 10,
+                      right: 10,
+                      bottom: 5,
                     ),
-                  );
-                }),
-              ),
-            ),
-          ],
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(
+                          spreadRadius: 10.10,
+                          blurRadius: 15,
+                          color: Colors.grey.withOpacity(0.05),
+                          offset: Offset(7, 7),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.black38.withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Image.network(
+                                    height: 50,
+                                    width: 50,
+                                    "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                SizedBox(width: 15),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      productName,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text("Category: ${categoryName}"),
+                                  ],
+                                ),
+                              ],
+                            ),
+
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "Price per Item: PHP ${productPrice}",
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                Text("x ${qty}"),
+                                Text(
+                                  "TOTAL: ${int.parse(qty) * double.parse(productPrice)}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
     );
