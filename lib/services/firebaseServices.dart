@@ -156,6 +156,14 @@ class FirebaseServices with ChangeNotifier {
     }
   } // addToCart
 
+  void deleteCart(String cartId) async {
+    try {
+      String url =
+          "https://vicostore-fa07b-default-rtdb.firebaseio.com/user_cart/$cartId.json";
+      final response = await http.delete(Uri.parse(url));
+    } catch (error) {}
+  } // deleteCart
+
   Future<List<CartClass>> getCart(String firebaseUID) async {
     List<CartClass> listCart = [];
     String url =

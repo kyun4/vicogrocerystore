@@ -13,6 +13,7 @@ import 'package:vico_grocery_store/screens/transaction.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import 'package:vico_grocery_store/services/firebaseServices.dart';
 import 'package:vico_grocery_store/services/utilCustom.dart';
@@ -668,6 +669,7 @@ class _listViewCart extends State<ListViewCart> {
               itemCount: 1,
               itemBuilder: (context, index) {
                 final data = snapshot.data;
+                String cartId = data![index].cart_id;
                 String productPrice = data![index].price;
                 String productId = data![index].product_id;
                 String categoryId = data![index].category_id;
@@ -715,67 +717,123 @@ class _listViewCart extends State<ListViewCart> {
                         ),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Slidable(
+                      key: ValueKey(cartId),
+                      endActionPane: ActionPane(
+                        motion: const DrawerMotion(),
+                        children: [
+                          // CustomSlidableAction(
+                          //   onPressed: (context) {},
+
+                          //   child: Container(
+                          //     color: Colors.deepOrangeAccent,
+                          //     width: 250,
+                          //     child: Text(
+                          //       "Checkout",
+                          //       style: TextStyle(color: Colors.white),
+                          //     ),
+                          //   ),
+                          // ),
+                          SlidableAction(
+                            onPressed: (context) {},
+                            flex: 1,
+                            backgroundColor: Colors.deepOrangeAccent,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Edit',
+                          ),
+                          SlidableAction(
+                            onPressed: (context) {
+                              Provider.of<FirebaseServices>(
+                                context,
+                                listen: false,
+                              ).deleteCart(cartId);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return MainMenu();
+                                  },
+                                ),
+                              );
+                            },
+                            flex: 1,
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.only(right: 15),
+                        child: Column(
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: Colors.black38.withOpacity(0.2),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Image.network(
-                                    height: 50,
-                                    width: 50,
-                                    "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                SizedBox(width: 15),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    Text(
-                                      productName,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Colors.black38.withOpacity(
+                                            0.2,
+                                          ),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Image.network(
+                                        height: 50,
+                                        width: 50,
+                                        "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                    Text("Category: ${categoryName}"),
+                                    SizedBox(width: 15),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          productName,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        Text("Category: ${categoryName}"),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
 
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  "Price per Item: PHP ${productPrice}",
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                Text("x ${qty}"),
-                                Text(
-                                  "TOTAL: ${int.parse(qty) * double.parse(productPrice)}",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      "Price per Item: PHP ${productPrice}",
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    Text("x ${qty}"),
+                                    Text(
+                                      "TOTAL: ${int.parse(qty) * double.parse(productPrice)}",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 );
