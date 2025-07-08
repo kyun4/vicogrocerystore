@@ -19,6 +19,8 @@ import 'package:vico_grocery_store/services/firebaseServices.dart';
 import 'package:vico_grocery_store/services/utilCustom.dart';
 
 import 'package:vico_grocery_store/classes/UsersClass.dart';
+import 'package:vico_grocery_store/classes/ProductsClass.dart';
+import 'package:vico_grocery_store/classes/CategoryClass.dart';
 
 class MainMenu extends StatefulWidget {
   const MainMenu({super.key});
@@ -28,6 +30,7 @@ class MainMenu extends StatefulWidget {
 
 class _mainMenuState extends State<MainMenu> {
   List<UsersClass> userData = [];
+
   String? username;
   String? email;
   String? phone;
@@ -38,7 +41,7 @@ class _mainMenuState extends State<MainMenu> {
   void initState() {
     super.initState();
     getUsersDataFromProvider();
-  }
+  } // initState
 
   void getUsersDataFromProvider() async {
     firebaseUID = FirebaseAuth.instance.currentUser!.uid.toString();
@@ -369,6 +372,8 @@ class ListViewCart extends StatefulWidget {
 }
 
 class _listViewCart extends State<ListViewCart> {
+  List<ProductsClass> productData = [];
+  List<CategoryClass> categoryData = [];
   String? firebaseUID;
 
   void initState() {
@@ -376,7 +381,33 @@ class _listViewCart extends State<ListViewCart> {
     setState(() {
       firebaseUID = FirebaseAuth.instance.currentUser!.uid.toString();
     });
+    getProducts();
+    getCategories();
   }
+
+  void getProducts() async {
+    List<ProductsClass> productsTemp =
+        await Provider.of<FirebaseServices>(
+          context,
+          listen: false,
+        ).getProductsData();
+
+    setState(() {
+      productData = productsTemp;
+    });
+  } // getProducts
+
+  void getCategories() async {
+    List<CategoryClass> categoryTemp =
+        await Provider.of<FirebaseServices>(
+          context,
+          listen: false,
+        ).getCategories();
+
+    setState(() {
+      categoryData = categoryTemp;
+    });
+  } // getCategories
 
   void _showCartDialog(
     int index,
@@ -653,12 +684,16 @@ class _listViewCart extends State<ListViewCart> {
                 listen: false,
               ).getCart(firebaseUID ?? "").asStream(),
           builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text("Data failed to load ..."));
-            }
+            int datalength = 0;
 
             if (!snapshot.hasData) {
               return Center(child: Text("Cart is Empty"));
+            } else {
+              if (snapshot.hasError) {
+                return Center(child: Text("Data failed to load ..."));
+              } else {
+                datalength = snapshot.data!.length;
+              }
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -666,7 +701,7 @@ class _listViewCart extends State<ListViewCart> {
             }
 
             return ListView.builder(
-              itemCount: 1,
+              itemCount: datalength,
               itemBuilder: (context, index) {
                 final data = snapshot.data;
                 String cartId = data![index].cart_id;
@@ -674,9 +709,56 @@ class _listViewCart extends State<ListViewCart> {
                 String productId = data![index].product_id;
                 String categoryId = data![index].category_id;
 
-                String productName = "";
-                String categoryName = "";
-                String imageUrl = "";
+                String productName =
+                    productData
+                                .where(
+                                  (product_data) =>
+                                      product_data.product_id == productId,
+                                )
+                                .length >
+                            0
+                        ? productData
+                            .where(
+                              (product_data) =>
+                                  product_data.product_id == productId,
+                            )
+                            .toList()[0]
+                            .product_name
+                        : "";
+                String categoryName =
+                    categoryData
+                                .where(
+                                  (categoryData) =>
+                                      categoryData.category_id == categoryId,
+                                )
+                                .length >
+                            0
+                        ? categoryData
+                            .where(
+                              (categoryData) =>
+                                  categoryData.category_id == categoryId,
+                            )
+                            .toList()[0]
+                            .category_name
+                        : "";
+
+                String imageUrl =
+                    productData
+                                .where(
+                                  (product_data) =>
+                                      product_data.product_id == productId,
+                                )
+                                .length >
+                            0
+                        ? productData
+                            .where(
+                              (product_data) =>
+                                  product_data.product_id == productId,
+                            )
+                            .toList()[0]
+                            .url_image
+                        : "";
+                ;
 
                 String qty = data![index].qty;
                 String soldByItem = data![index].sold_by_item;
@@ -776,21 +858,12 @@ class _listViewCart extends State<ListViewCart> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: Colors.black38.withOpacity(
-                                            0.2,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
                                       child: Image.network(
                                         height: 50,
                                         width: 50,
-                                        "https://banglasupermarket.co.uk/wp-content/uploads/2022/05/11-600x600.png",
+                                        imageUrl,
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -816,12 +889,12 @@ class _listViewCart extends State<ListViewCart> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      "Price per Item: PHP ${productPrice}",
+                                      "PHP ${productPrice} x ${qty}",
                                       style: TextStyle(fontSize: 12),
                                     ),
-                                    Text("x ${qty}"),
+
                                     Text(
-                                      "TOTAL: ${int.parse(qty) * double.parse(productPrice)}",
+                                      "PHP ${int.parse(qty) * double.parse(productPrice)}",
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -1529,7 +1602,22 @@ class _listViewMainState extends State<ListViewMain> {
                 ),
               ),
               SizedBox(height: 2.5),
-              Text("View All Transactions", style: TextStyle(fontSize: 12)),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return Transaction();
+                      },
+                    ),
+                  );
+                },
+                child: Text(
+                  "View All Transactions",
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
             ],
           ),
         ),

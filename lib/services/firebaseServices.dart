@@ -4,6 +4,7 @@ import 'package:vico_grocery_store/classes/CartClass.dart';
 import 'package:vico_grocery_store/classes/ProductsClass.dart';
 import 'package:vico_grocery_store/classes/WalletClass.dart';
 import 'package:vico_grocery_store/classes/TransactionClass.dart';
+import 'package:vico_grocery_store/classes/CategoryClass.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
@@ -203,6 +204,39 @@ class FirebaseServices with ChangeNotifier {
       throw error;
     }
   } // getCart
+
+  Future<List<CategoryClass>> getCategories() async {
+    List<CategoryClass> listCategories = [];
+    try {
+      String url =
+          "https://vicostore-fa07b-default-rtdb.firebaseio.com/categories.json";
+      final response = await http.get(Uri.parse(url));
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      if (extractedData == null || response.body.isEmpty) {
+        return [];
+      }
+      extractedData.forEach((key, json) {
+        listCategories.add(
+          new CategoryClass(
+            category_id: json['category_id'] ?? "",
+            category_name: json['category_name'] ?? "",
+            date_time_added: json['date_time_added'] ?? "",
+            added_by: json['added_by'] ?? "",
+            added_by_role: json['added_by_role'] ?? "",
+            date_time_last_updated: json['date_time_last_updated'] ?? "",
+            last_updated_by: json['last_updated_by'] ?? "",
+            last_updated_by_role: json['last_updated_by_role'] ?? "",
+            sub_category_of: json['sub_category_of'] ?? "",
+            status: json['status'] ?? "",
+          ),
+        );
+      });
+
+      return listCategories;
+    } catch (error) {
+      throw error;
+    }
+  } // getCategories
 
   Future<List<TransactionClass>> getTransactionStream(
     int limit,
